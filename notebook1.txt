@@ -1,0 +1,94 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+attach(framingham_dataset)
+framingham_dataset1<-framingham_dataset
+#question 3
+library(dplyr)
+framingham_dataset$season<-as.factor( case_when(
+  month<=3~"1",
+  month<=6~"2",
+  month<=9~"3",
+  month<=12~"4"
+))
+
+head(framingham_dataset)
+library(ggplot2)
+plot1<-ggplot(data = framingham_dataset,aes(x=season))+geom_bar()+ggtitle('distribution of seasonal effect')
+print(plot1)
+#question4
+#chd_p<-framingham_dataset%>%filter(chdfate==1)
+#chd_n<-framingham_dataset%>%filter(chdfate!=1)
+#table1<-table(framingham_dataset$chdfate,framingham_dataset$sex,mean(framingham_dataset$age))
+
+framingham_dataset$sex<-factor(framingham_dataset$sex,levels=1:2,labels=c('male','female'))
+framingham_dataset$chdfate<-factor(framingham_dataset$chdfate,levels = 0:1,labels = c('stayed negative','turned positive'))
+
+library(table1)
+table1 <-table1(~age+sex+season+sbp+scl+bmi|chdfate,data=framingham_dataset)
+table1
+
+
+#question 5
+obese<-framingham_dataset%>%filter(bmi>=30)
+attach(obese)
+table2<-table1(~age+sex+sbp|chdfate,data=obese)
+table2
+
+
+#question6
+library(ggplot2)
+attach(framingham_dataset)
+plot1<-ggplot(data=framingham_dataset,aes(x=sex,y=sbp))+geom_boxplot()+ggtitle('relationship between gender and sbp')
+plot1
+#the female sbp is more spread compared to male sbp with more extreme values.
+plot2<-ggplot(data=framingham_dataset,aes(x=sex,y=bmi))+geom_boxplot()+ggtitle('relationship between gender and bmi')
+plot2
+
+
+#plot3<-ggplot(data=framingham_dataset,aes(x=sex,y=season))+geom_boxplot()+ggtitle('relationship between gender and sbp')
+#plot3
+
+#question 7
+#chd_p<-framingham_dataset%>%filter(chdfate=='turned positive')
+#attach(chd_p)
+
+
+#question8
+#female<-framingham_dataset%>%filter(sex=='female')
+#attach(female)
+#attach(framingham_dataset)
+#plot5 <- ggplot(data = framingham_dataset, aes(x = scl, y = bmi,fill=sex)) +
+ # geom_point()+
+ # geom_smooth(method = 'lm',se=FALSE)+
+#ggtitle('relationship between scl and bmi in females') 
+#plot5
+
+
+# question 10
+library(survival)
+library(ggplot2)
+library(ggpubr)
+library(survminer)
+attach(framingham_dataset1)
+framingham_dataset1$chdfate<-as.logical(chdfate)
+framingham_dataset1$sex<-as.factor(sex)
+
+ 
+
+
+fit1<-survfit(Surv(time =followup,event = chdfate )~sex,data = framingham_dataset1)
+summary(fit1)
+
+ggsurvplot(
+  fit = fit1, 
+  xlab = "followups", 
+  ylab = "Overall survival probability")
+
+cox.mod<-coxph(Surv(followup,chdfate)~sex)
+summary(cox.mod)
+```
+
